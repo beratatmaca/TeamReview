@@ -41,22 +41,32 @@ int main(int argc, char **argv)
         </header>
         <section class="modal-card-body">
           <div class="field">
-            <div class="control">
-              <textarea class="textarea" placeholder="Comment"></textarea>
-            </div>
-            <div class="field">
-              <label class="label">Tags</label>
+
+            <label class="label">Selection</label>
+            <fieldset disabled>
               <div class="control">
-                <select data-type="tags" data-placeholder="Choose Tags">
-                  <option value="one" selected>One</option>
-                  <option value="two">Two</option>
+                <textarea id="popup-selected-text" class="textarea" placeholder="Comment"></textarea>
+              </div>
+            </fieldset>
+
+            <label class="label">Comment</label>
+            <div class="control">
+              <textarea id="popup-comment-area" class="textarea" placeholder="Comment"></textarea>
+            </div>
+
+            <label class="label">Tags</label>
+            <div class="control">
+              <div class="select">
+                <select>
+                  <option>One</option>
+                  <option>Two</option>
                 </select>
               </div>
             </div>
           </div>
         </section>
         <footer class="modal-card-foot">
-          <button class="button is-success">Save changes</button>
+          <button class="button is-success" onclick="submitComment()">Save changes</button>
           <button class="button" onclick="closePopup()">Cancel</button>
         </footer>
       </div>
@@ -68,6 +78,9 @@ int main(int argc, char **argv)
 {% block scripts %}
 <script>
 
+  let selectedText = ""
+  let activeFile = ""
+  
   function getSelectionText() {
     var text = "";
     var activeEl = document.activeElement;
@@ -77,14 +90,31 @@ int main(int argc, char **argv)
     }
     return text;
   }
+
   document.onmouseup = document.onkeyup = function () {
-    var selectedText = getSelectionText();
+    selectedText = getSelectionText();
     if (selectedText.length > 0)
     {
       var modalDlg = document.getElementById('image-modal');
       modalDlg.classList.add('is-active');
+      var modalEl = document.getElementById('popup-selected-text');
+      modalEl.innerHTML = selectedText;
     }
   };
+
+  function submitComment() {
+    selectedText = getSelectionText();
+    var modalComment = document.getElementById('popup-comment-area');
+    var comment = modalComment.value;
+
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "/submit_comment", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    var data = JSON.stringify({ "comment": comment, "selectedText": selectedText });
+    xhr.send(data);
+
+    closePopup();
+  }
 
   // Function to close the popup
   function closePopup() {

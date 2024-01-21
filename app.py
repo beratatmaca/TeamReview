@@ -116,6 +116,16 @@ def render_tree(element, level, index):
 
     return result
 
+@app.route('/submit_comment', methods=['GET', 'POST'])
+def submit_comment():
+    response = {
+        "change" : False,
+        "content": ""
+    }
+    data_from_js = request.json  # Assuming data is sent as JSON
+    print(data_from_js["selectedText"])
+    return jsonify(response)
+
 @app.route('/process_data', methods=['GET', 'POST'])
 def process_data():
     response = {
