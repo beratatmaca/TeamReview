@@ -1,9 +1,39 @@
 {% extends "base.html" %}
 {% block body %}
 {% include "navbar.html" %}
-<section class="hero is-primary is-bold is-large">
-  <div class="hero-body"></div>
-</section>
+<div class="container">
+  <div class="columns">
+    <div class="column is-3 ">
+      <p class="menu-label">
+        Project Structure
+      </p>
+      <div id="tree">
+        <ul role="tree" aria-labelledby="tree1">
+          {% block tree %}
+          {{ render_tree(root, level, index)|safe }}
+          {% endblock %}
+        </ul>
+      </div>
+    </div>
+    <div class="column is-9">
+
+      <div class="card">
+        <div class="card-content">
+          <div id="code-section" class="line-numbers">
+            <pre class="language-c" id="current-content-unique"><code>
+int main(int argc, char **argv)
+{
+  return 0;
+}
+    </code></pre>
+          </div>
+        </div>
+      </div>
+
+
+    </div>
+  </div>
+</div>
 {% endblock %}
 {% block scripts %}
 <script src="../static/js/scripts.js"></script>
