@@ -6,11 +6,30 @@
   <div class="hero-body">
     <div class="container has-text-centered">
       <div id="settings" class="settings-box">
-        <div class="settings-area">    
-          <h1 class="title">Settings</h1>         
+        <div class="settings-area">
+          <h1 class="title">Settings</h1>
+          <div class="field">
+            <div class="file is-boxed has-name">
+              <label class="file-label">
+                <input id="fileInput" class="file-input is-info" type="file" name="resume" accept=".zip">
+                <span class="file-cta">
+                  <span class="file-icon">
+                    <i class="fas fa-upload"></i>
+                  </span>
+                  <span class="file-label" id="fileLabel">
+                    Choose a zip file
+                  </span>
+                </span>
+                <span class="file-name has-text-centered" id="fileName">
+                  No file uploaded
+                </span>
+              </label>
+            </div>
+          </div>
           <div class="field">
             <p class="control has-icons-left">
-              <input id="settings-user" class="input is-success" type="text" placeholder="{{user.username}}" readonly="readonly">
+              <input id="settings-user" class="input is-success" type="text" placeholder="{{user.username}}"
+                readonly="readonly">
               <span class="icon is-small is-left">
                 <i class="fa fa-user"></i>
               </span>
@@ -43,11 +62,66 @@
           <br>
           <i><a id="feedback" class="feedback"></a></i>
         </div>
-      </div>    
+      </div>
     </div>
   </div>
 </section>
 {% endblock %}
 {% block scripts %}
-<script src="../static/js/scripts.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const fileInput = document.getElementById('fileInput');
+    const fileLabel = document.getElementById('fileLabel');
+    const fileNameDisplay = document.getElementById('fileName');
+
+    fileInput.addEventListener('change', function (event) {
+      const file = event.target.files[0];
+
+      if (file && file.name.endsWith('.zip')) {
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "/upload_zip_file", true);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState == XMLHttpRequest.DONE) {
+            var parsedResponse = JSON.parse(xhr.responseText);
+            var readStatus = parsedResponse["success"];
+            if (readStatus) {
+              // Display the selected file name
+              fileLabel.textContent = "Done";
+              fileNameDisplay.textContent = file.name;
+              fileInput.classList.remove('is-info');
+              fileInput.classList.remove('is-error');
+              fileInput.classList.add('is-success');
+            }
+            else {
+              // Invalid file
+              fileLabel.textContent = "Please choose a valid ZIP file";
+              fileLabel.textContent = '';
+              fileInput.classList.remove('is-info');
+              fileInput.classList.remove('is-success');
+              fileInput.classList.add('is-error');
+            }
+          }
+        }
+
+        // Read the file as base64
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const base64String = e.target.result.split(',')[1];
+          var data = JSON.stringify({ "content": base64String });
+          xhr.send(data);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        // Invalid file or no file selected
+        fileLabel.textContent = "Please choose a valid ZIP file";
+        fileLabel.textContent = '';
+        fileInput.classList.remove('is-info');
+        fileInput.classList.remove('is-success');
+        fileInput.classList.add('is-error');
+      }
+    });
+  });
+</script>
 {% endblock %}

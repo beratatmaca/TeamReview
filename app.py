@@ -7,10 +7,13 @@ import json
 import xml.etree.ElementTree as ET
 import os
 import pathlib
+import base64
+import zipfile
+import shutil
 
 app = Flask(__name__)
 app.secret_key = os.urandom(12)  # Generic key for dev purposes only
-
+folder_contents_root = None
 
 def create_xml(output_file):
     root = ET.Element("root")
@@ -21,6 +24,12 @@ def create_xml(output_file):
     tree = ET.ElementTree(root)
     tree.write(output_file, encoding="UTF-8", xml_declaration=True)
 
+def read_xml(input_file):
+    global folder_contents_root
+    with open('./config/folder_contents.xml', 'r') as file:
+        xml_data = file.read()
+        file.close()
+        folder_contents_root = ET.fromstring(xml_data)
 
 def scan_path(root, folder_path):
     folders = [ f.name for f in os.scandir(folder_path) if f.is_dir() ]
@@ -36,6 +45,7 @@ def scan_path(root, folder_path):
 # -------- Login ------------------------------------------------------------- #
 @app.route('/', methods=['GET', 'POST'])
 def login():
+    global folder_contents_root
     if not session.get('logged_in'):
         form = forms.LoginForm(request.form)
         if request.method == 'POST':
@@ -127,6 +137,45 @@ def submit_comment():
     print(data_from_js["selectedText"])
     return jsonify(response)
 
+@app.route('/upload_zip_file', methods=['GET', 'POST'])
+def upload_zip_file():
+    response = {
+        "success": ""
+    }
+    try:
+        data_from_js = request.json  # Assuming data is sent as JSON
+        output_folder="./uploads"
+        # Decode the base64 string
+        zip_data = base64.b64decode(data_from_js["content"])
+
+        # Create the output folder if it doesn't exist
+        if os.path.exists(output_folder):
+            shutil.rmtree(output_folder)
+        os.makedirs(output_folder)
+
+        # Specify the path for the zip file
+        zip_file_path = os.path.join(output_folder, "uploaded_file.zip")
+
+        # Write the decoded data to the zip file
+        with open(zip_file_path, "wb") as zip_file:
+            zip_file.write(zip_data)
+
+        # Extract the contents of the zip file to the output folder
+        with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
+            zip_ref.extractall(output_folder)
+        
+        # Delete the zip file after extraction
+        os.remove(zip_file_path)
+        create_xml('./config/folder_contents.xml')
+        read_xml("./config/folder_contents.xml")
+
+        response["success"] = True
+
+    except Exception as e:
+        response["success"] = False
+    return jsonify(response)
+    
+
 @app.route('/process_data', methods=['GET', 'POST'])
 def process_data():
     response = {
@@ -149,11 +198,8 @@ def process_data():
     return jsonify(response)
 
 with app.app_context():
-    create_xml('folder_contents.xml')
-    with open('folder_contents.xml', 'r') as file:
-        xml_data = file.read()
-        file.close()
-        folder_contents_root = ET.fromstring(xml_data)
+    create_xml('./config/folder_contents.xml')
+    read_xml("./config/folder_contents.xml")
 
 # ======== Main ============================================================== #
 if __name__ == "__main__":
