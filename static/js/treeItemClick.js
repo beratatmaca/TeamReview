@@ -9,6 +9,43 @@
 
 'use strict';
 
+function updateClassBasedOnExtension(fileExtension) {
+  // Map file extensions to Prism language classes
+  var extensionToLanguage = {
+    '.js': 'language-javascript',
+    '.html': 'language-html',
+    '.css': 'language-css',
+    '.java': 'language-java',
+    '.python': 'language-python',
+    '.php': 'language-php',
+    '.ruby': 'language-ruby',
+    '.c': 'language-c',
+    '.cpp': 'language-cpp',
+    '.swift': 'language-swift',
+    '.go': 'language-go',
+    '.typescript': 'language-typescript',
+    '.json': 'language-json',
+    '.xml': 'language-xml',
+    '.markdown': 'language-markdown',
+    '.bash': 'language-bash',
+    '.sql': 'language-sql',
+    '.yaml': 'language-yaml',
+    '.docker': 'language-docker',
+    '.scss': 'language-scss',
+    '.less': 'language-less',
+    '.coffeescript': 'language-coffeescript',
+    '.rust': 'language-rust',
+    '.jsx': 'language-jsx',
+    '.tsx': 'language-tsx',
+    // Add more mappings as needed
+  };
+
+  // Convert the file extension to lowercase
+  fileExtension = fileExtension.toLowerCase();
+
+  // Return the class name based on the file extension
+  return extensionToLanguage[fileExtension] || 'language-none';
+}
 
 /**
  * ARIA Treeview example
@@ -30,6 +67,10 @@ window.addEventListener('load', function () {
       var type = treeitem.getAttribute('type');
       // Retrieve all parent nodes
       var parents = getAllParents(treeitem);
+      var root_folder = parents.join('/');
+      if (type === 'file') {
+        activeFile = root_folder.concat('/',label);
+      }
 
       var xhr = new XMLHttpRequest();
 
@@ -38,8 +79,13 @@ window.addEventListener('load', function () {
           var parsedResponse = JSON.parse(xhr.responseText);
           var changeStatus = parsedResponse["change"];
           var contentResponse = parsedResponse["content"];
+          var fileSuffix = parsedResponse["suffix"];
           if (changeStatus) {
             const codeOutput = document.getElementById('current-content-unique');
+            const codeElement = document.getElementById('code-content-unique');
+            console.log(updateClassBasedOnExtension(fileSuffix));
+            codeElement.className = updateClassBasedOnExtension(fileSuffix);
+            
             codeOutput.querySelector('code').textContent = contentResponse;
             Prism.highlightAll();
           }

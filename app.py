@@ -6,6 +6,7 @@ from flask import Flask, redirect, url_for, render_template, request, session, j
 import json
 import xml.etree.ElementTree as ET
 import os
+import pathlib
 
 app = Flask(__name__)
 app.secret_key = os.urandom(12)  # Generic key for dev purposes only
@@ -130,7 +131,8 @@ def submit_comment():
 def process_data():
     response = {
         "change" : False,
-        "content": ""
+        "content": "",
+        "suffix": ""
     }
     data_from_js = request.json  # Assuming data is sent as JSON
     if data_from_js['type'] == 'file':
@@ -141,6 +143,7 @@ def process_data():
         with open(file_path, 'r') as file:
             text = file.read()
             file.close()
+            response["suffix"] = pathlib.Path(file_path).suffix
             response["change"] = True
             response["content"] = text
     return jsonify(response)

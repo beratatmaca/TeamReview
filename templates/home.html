@@ -19,7 +19,7 @@
       <div class="card">
         <div class="card-content">
           <div id="code-section" class="line-numbers">
-            <pre class="language-c" id="current-content-unique"><code>
+            <pre id="current-content-unique" data-download-link><code id="code-content-unique">
 int main(int argc, char **argv)
 {
   return 0;
@@ -77,18 +77,16 @@ int main(int argc, char **argv)
 {% endblock %}
 {% block scripts %}
 <script>
-
-  let selectedText = ""
-  let activeFile = ""
+  let activeFile = "";
   
   function getSelectionText() {
-    var text = "";
+    var selectedText = "";
     var activeEl = document.activeElement;
     var activeElId = activeEl ? activeEl.id : null;
     if (activeElId == "current-content-unique") {
-      text = window.getSelection().toString();
+      selectedText = window.getSelection().toString();
     }
-    return text;
+    return selectedText;
   }
 
   document.onmouseup = document.onkeyup = function () {
@@ -103,14 +101,15 @@ int main(int argc, char **argv)
   };
 
   function submitComment() {
-    selectedText = getSelectionText();
     var modalComment = document.getElementById('popup-comment-area');
     var comment = modalComment.value;
+    var modalSelection = document.getElementById('popup-selected-text');
+    var selectedText = modalSelection.value;
 
     var xhr = new XMLHttpRequest();
     xhr.open("POST", "/submit_comment", true);
     xhr.setRequestHeader("Content-Type", "application/json");
-    var data = JSON.stringify({ "comment": comment, "selectedText": selectedText });
+    var data = JSON.stringify({ "file": activeFile, "comment": comment, "selectedText": selectedText });
     xhr.send(data);
 
     closePopup();

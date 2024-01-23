@@ -2,7 +2,7 @@ ul[role="tree"] {
   margin: 0;
   padding: 0;
   list-style: none;
-  font-size: 120%;
+  font-size: 100%;
 }
 
 ul[role="tree"] li {
@@ -58,7 +58,7 @@ ul[role="tree"] li {
 [role="treeitem"] span {
   width: 9em;
   margin: 0;
-  padding: 0.125em;
+  padding: 0;
   display: block;
 }
 
@@ -71,6 +71,10 @@ ul[role="tree"] li {
 [role="treeitem"][aria-selected="true"] {
   padding-left: 4px;
   border-left: 5px solid #005a9c;
+}
+
+[role="treeitem"][aria-selected="true"][type="file"] {
+  color: darkorange;
 }
 
 [role="treeitem"].focus,
