@@ -2,14 +2,16 @@
 
 from scripts import forms
 from scripts import helpers
-from flask import Flask, redirect, url_for, render_template, request, session, jsonify
+from flask import Flask, redirect, url_for, render_template, request, session, jsonify, Response
 import json
+from io import StringIO
 import xml.etree.ElementTree as ET
 import os
 import pathlib
 import base64
 import zipfile
 import shutil
+import csv
 
 app = Flask(__name__)
 app.secret_key = os.urandom(12)  # Generic key for dev purposes only
@@ -106,6 +108,14 @@ def settings():
     return redirect(url_for('login'))
 
 
+@app.route('/comments', methods=['GET', 'POST'])
+def comments():
+    if session.get('logged_in'):
+        comments = helpers.get_comments()
+        user = helpers.get_user()
+        return render_template('comments.html', user=user, comments=comments)
+    return redirect(url_for('login'))
+
 
 def render_tree(element, level, index):
     result = ''
@@ -127,15 +137,60 @@ def render_tree(element, level, index):
 
     return result
 
+@app.route('/mark_as_reviewed', methods=['GET', 'POST'])
+def mark_as_reviewed():
+    if session.get('logged_in'):
+        print(request.json)
+        return jsonify({'success': True}), 200
+    else:
+        return jsonify({'success': False, 'error': 'Login Required'}), 404
+
 @app.route('/submit_comment', methods=['GET', 'POST'])
 def submit_comment():
-    response = {
-        "change" : False,
-        "content": ""
-    }
-    data_from_js = request.json  # Assuming data is sent as JSON
-    print(data_from_js["selectedText"])
-    return jsonify(response)
+    form = forms.CommentForm(request.form)
+    if session.get('logged_in'):
+        user = helpers.get_user().username
+        if request.method == 'POST':
+            selectedText = request.form["selectedText"]
+            activeFile = request.form["activeFile"]
+            comment = request.form["comment"]
+            tag = request.form["tag"]
+            if form.validate():
+                helpers.add_comment(activeFile, selectedText, comment, user, tag)
+            else:
+                return json.dumps({'status': 'Comment not saved'})
+        else:
+            return json.dumps({'status': 'Comment not saved'})
+    else:
+        return json.dumps({'status': 'Comment not saved'})
+    return json.dumps({'status': 'Comment saved'})
+
+
+@app.route('/download_csv', methods=['GET', 'POST'])
+def download_csv():
+    comments = helpers.get_comments()
+
+    csv_data = StringIO()
+    csv_writer = csv.writer(csv_data)
+    csv_writer.writerow(['ID', 'File', 'Selected Text', 'Comment', 'Tag', 'User'])
+    for comment in comments:
+        csv_writer.writerow([comment.id, comment.activeFile, comment.selectedText, comment.comment, comment.tag, comment.username])
+
+    # Create a CSV response
+    response = Response(csv_data.getvalue(), content_type='text/csv')
+    response.headers["Content-Disposition"] = "attachment; filename=comments.csv"
+
+    return response
+
+@app.route('/delete_comment/<int:comment_id>', methods=['DELETE'])
+def delete_comment_route(comment_id):
+    # Implement your delete_comment function to delete the comment from the database
+    result = helpers.delete_comment(comment_id)
+
+    if result:
+        return jsonify({'success': True}), 200
+    else:
+        return jsonify({'success': False, 'error': 'Comment not found'}), 404
 
 @app.route('/upload_zip_file', methods=['GET', 'POST'])
 def upload_zip_file():

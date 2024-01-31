@@ -9,24 +9,20 @@
         <div class="settings-area">
           <h1 class="title">Settings</h1>
           <div class="field">
-            <div class="file is-boxed has-name">
-              <label class="file-label">
-                <input id="fileInput" class="file-input is-info" type="file" name="resume" accept=".zip">
-                <span class="file-cta">
-                  <span class="file-icon">
-                    <i class="fas fa-upload"></i>
-                  </span>
-                  <span class="file-label" id="fileLabel">
-                    Choose a zip file
-                  </span>
+            <label class="file-label">
+              <input id="fileInput" class="file-input is-info" type="file" name="resume" accept=".zip">
+              <span class="file-cta">
+                <span class="file-icon">
+                  <i class="fas fa-upload"></i>
                 </span>
-                <span class="file-name has-text-centered" id="fileName">
-                  No file uploaded
+                <span class="file-label" id="fileLabel">
+                  Choose a zip file
                 </span>
-              </label>
-            </div>
-          </div>
-          <div class="field">
+              </span>
+              <span class="file-name has-text-centered" id="fileName">
+                No file uploaded
+              </span>
+            </label>
             <p class="control has-icons-left">
               <input id="settings-user" class="input is-success" type="text" placeholder="{{user.username}}"
                 readonly="readonly">

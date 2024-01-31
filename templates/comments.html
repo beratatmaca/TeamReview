@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block body %}
+{% include "navbar.html" %}
+<title>TeamReview</title>
+<section class="hero is-primary is-bold is-small">
+  <div class="hero-body">
+    <div class="container has-text-centered">
+      <table class="table is-striped is-hoverable is-fullwidth">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>File</th>
+            <th>Selected Text</th>
+            <th>Comment</th>
+            <th>Tag</th>
+            <th>User</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for comment in comments %}
+          <tr>
+            <td>{{ comment.id }}</td>
+            <td>{{ comment.activeFile }}</td>
+            <td>{{ comment.selectedText }}</td>
+            <td>{{ comment.comment }}</td>
+            <td>{{ comment.tag }}</td>
+            <td>{{ comment.username }}</td>
+            <td>
+              <button class="button is-danger" onclick="deleteRow({{ comment.id }})">
+                <span class="icon is-small">
+                  <i class="fa fa-trash"></i>
+                </span>
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <form action="{{ url_for('download_csv') }}" method="get" id="downloadForm">
+        <button class="button is-large is-info" onclick="downloadCSV()">
+          <span class="icon is-large">
+            <i class="fa fa-file-csv"></i>
+          </span>
+          <span>Download as CSV File</span>
+        </button>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+
+<script>
+  function downloadCSV() {
+    document.getElementById('downloadForm').submit();
+  }
+  function deleteRow(commentId) {
+    // Send an AJAX request to the server to delete the row
+    fetch(`/delete_comment/${commentId}`, {
+      method: 'DELETE',
+    })
+    .then(response => {
+      if (response.ok) {
+        // Reload the page after successful deletion
+        location.reload();
+      } else {
+        console.error('Failed to delete row');
+      }
+    })
+    .catch(error => {
+      console.error('Error during row deletion:', error);
+    });
+  }
+</script>
+{% endblock %}

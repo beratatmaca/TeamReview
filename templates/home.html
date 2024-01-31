@@ -17,6 +17,12 @@
     </div>
     <div class="column is-9">
       <div class="card">
+        <header class="card-header">
+          <label class="checkbox">
+            <input id="mark-as-reviewed" type="checkbox">
+            Mark as reviewed
+          </label>
+        </header>
         <div class="card-content">
           <div id="code-section" class="line-numbers">
             <pre id="current-content-unique" data-download-link><code id="code-content-unique">
@@ -57,7 +63,7 @@ int main(int argc, char **argv)
             <label class="label">Tags</label>
             <div class="control">
               <div class="select">
-                <select>
+                <select id="popup-tag-area">
                   <option>One</option>
                   <option>Two</option>
                 </select>
@@ -66,7 +72,7 @@ int main(int argc, char **argv)
           </div>
         </section>
         <footer class="modal-card-foot">
-          <button class="button is-success" onclick="submitComment()">Save changes</button>
+          <button class="button is-success" onclick="submitComment()">Submit</button>
           <button class="button" onclick="closePopup()">Cancel</button>
         </footer>
       </div>
@@ -101,17 +107,23 @@ int main(int argc, char **argv)
   };
 
   function submitComment() {
-    var modalComment = document.getElementById('popup-comment-area');
-    var comment = modalComment.value;
-    var modalSelection = document.getElementById('popup-selected-text');
-    var selectedText = modalSelection.value;
+    var comment = document.getElementById('popup-comment-area').value;
+    var selectedText = document.getElementById('popup-selected-text').value;
+    var tag = document.getElementById('popup-tag-area').value;
 
-    var xhr = new XMLHttpRequest();
-    xhr.open("POST", "/submit_comment", true);
-    xhr.setRequestHeader("Content-Type", "application/json");
-    var data = JSON.stringify({ "file": activeFile, "comment": comment, "selectedText": selectedText });
-    xhr.send(data);
-
+    $.post({
+      type: "POST",
+      url: "/submit_comment",
+      data: {"activeFile": activeFile, 
+             "comment": comment, 
+             "selectedText": selectedText,
+             "tag": tag},
+      success(response) {
+        var status = JSON.parse(response)["status"];
+        if (status === "Comment saved") { closePopup(); }
+        else { closePopup(); }
+      }
+    });
     closePopup();
   }
 
@@ -126,5 +138,26 @@ int main(int argc, char **argv)
     closePopup();
   });
 
+  var markAsReviewedCheckbox = document.getElementById('mark-as-reviewed');
+  markAsReviewedCheckbox.addEventListener('click', function () {
+    var is_reviewed = false;
+    if(imageModalCloseBtn.classList.contains('is-active')) {
+      is_reviewed = true;
+    } else {
+      is_reviewed = false;
+    }
+    var xhr = new XMLHttpRequest();
+
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState == XMLHttpRequest.DONE) {
+        location.reload();
+      }
+    }
+    
+    xhr.open("POST", "/mark_as_reviewed", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    var data = JSON.stringify({"activeFile": activeFile, "is_reviewed": is_reviewed});
+    xhr.send(data);
+  });
 </script>
 {% endblock %}

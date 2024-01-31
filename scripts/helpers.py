@@ -39,6 +39,33 @@ def add_user(username, password, email):
         s.add(u)
         s.commit()
 
+def add_comment(activeFile, selectedText, comment, username, tag):
+    with session_scope() as s:
+        u = tabledef.Comments(activeFile=activeFile, selectedText=selectedText, comment=comment, username=username, tag=tag)
+        s.add(u)
+        s.commit()
+
+def delete_comment(comment_id):
+    with session_scope() as session:
+        # Query the database for the comment to be deleted
+        comment = session.query(tabledef.Comments).filter_by(id=comment_id).first()
+
+        if comment:
+            # Delete the comment from the database
+            session.delete(comment)
+            return True
+        else:
+            return False
+
+def get_comments():
+    with session_scope() as s:
+        comments = s.query(tabledef.Comments).all()
+        return comments
+
+def get_comment(comment_id):
+    with session_scope() as s:
+        comment = s.query(tabledef.Comments).filter_by(id=comment_id).first()
+        return comment
 
 def change_user(**kwargs):
     username = session['username']
