@@ -1,5 +1,5 @@
 runtime: python39  # Choose the appropriate Python version
-entrypoint: gunicorn -b :$PORT app:app
+entrypoint: gunicorn -b :$PORT main:app
 
 runtime_config:
   python_version: 3.9
