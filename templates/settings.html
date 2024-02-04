@@ -23,6 +23,8 @@
                 No file uploaded
               </span>
             </label>
+          </div>
+          <div class="field">
             <p class="control has-icons-left">
               <input id="settings-user" class="input is-success" type="text" placeholder="{{user.username}}"
                 readonly="readonly">
@@ -64,7 +66,7 @@
 </section>
 {% endblock %}
 {% block scripts %}
-
+<script src="{{url_for('static', filename='js/scripts.js')}}"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     const fileInput = document.getElementById('fileInput');
@@ -80,24 +82,7 @@
         xhr.setRequestHeader("Content-Type", "application/json");
         xhr.onreadystatechange = function () {
           if (xhr.readyState == XMLHttpRequest.DONE) {
-            var parsedResponse = JSON.parse(xhr.responseText);
-            var readStatus = parsedResponse["success"];
-            if (readStatus) {
-              // Display the selected file name
-              fileLabel.textContent = "Done";
-              fileNameDisplay.textContent = file.name;
-              fileInput.classList.remove('is-info');
-              fileInput.classList.remove('is-error');
-              fileInput.classList.add('is-success');
-            }
-            else {
-              // Invalid file
-              fileLabel.textContent = "Please choose a valid ZIP file";
-              fileLabel.textContent = '';
-              fileInput.classList.remove('is-info');
-              fileInput.classList.remove('is-success');
-              fileInput.classList.add('is-error');
-            }
+            message(JSON.parse(xhr.responseText)["status"]);
           }
         }
 

@@ -350,9 +350,6 @@ def upload_zip_file():
     Returns:
         dict: A dictionary containing a success key indicating whether the operation was successful or not.
     """
-    response = {
-        "success": ""
-    }
     try:
         data_from_js = request.json
         output_folder="./uploads"
@@ -380,11 +377,10 @@ def upload_zip_file():
         create_xml('./config/folder_contents.xml')
         read_xml("./config/folder_contents.xml")
 
-        response["success"] = True
+        return json.dumps({'status': 'Project Uploaded Successfully!'})
 
     except Exception as e:
-        response["success"] = False
-    return jsonify(response)
+        return json.dumps({'status': 'Project Upload Failed'})
 
 @app.route('/process_data', methods=['GET', 'POST'])
 def process_data():
