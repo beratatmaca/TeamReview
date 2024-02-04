@@ -49,10 +49,12 @@ def read_xml(input_file):
     """
     global folder_contents_root
     with open('./config/folder_contents.xml', 'r') as file:
-        xml_data = file.read()
-        file.close()
-        folder_contents_root = ET.fromstring(xml_data)
-
+        try:
+            xml_data = file.read()
+            file.close()
+            folder_contents_root = ET.fromstring(xml_data)
+        except:
+            folder_contents_root = None
 def save_xml(output_file):
     """
     Save the XML representation of the folder contents to a file.
@@ -213,23 +215,27 @@ def render_tree(element, level, index):
 
     """
     result = ''
-    if element.tag == "folder":
-        is_reviewed = str(element.get("is_reviewed")).lower()
-        result += f"<li role=\"treeitem\" aria-level=\"{level}\" aria-setsize=\"3\" aria-posinset=\"{index}\" aria-expanded=\"false\" aria-selected=\"false\" type=\"folder\" is_reviewed=\"{is_reviewed}\">"
-        result += f'<span>{element.get("name")}</span>'
-        result += "<ul role=\"group\">"
-        for index, child in enumerate(element):
-            result += render_tree(child, level+1, index)
-        result += "</ul></li>"
-    elif element.tag == "file":
-        is_reviewed = str(element.get("is_reviewed")).lower()
-        result += f'<li role=\"treeitem\" aria-level=\"{level}\" aria-setsize=\"5\" aria-posinset=\"{index}\" aria-selected=\"false\" class=\"doc\" type=\"file\" is_reviewed=\"{is_reviewed}\">{element.text}</li>'
-    elif element.tag == "root":
-        for index, child in enumerate(element):
-            result += render_tree(child, 0, index)
-    elif element.tag == "category":
-        for index, child in enumerate(element):
-            result += render_tree(child, 1, index)
+    try:
+        if element.tag == "folder":
+            is_reviewed = str(element.get("is_reviewed")).lower()
+            result += f"<li role=\"treeitem\" aria-level=\"{level}\" aria-setsize=\"3\" aria-posinset=\"{index}\" aria-expanded=\"false\" aria-selected=\"false\" type=\"folder\" is_reviewed=\"{is_reviewed}\">"
+            result += f'<span>{element.get("name")}</span>'
+            result += "<ul role=\"group\">"
+            for index, child in enumerate(element):
+                result += render_tree(child, level+1, index)
+            result += "</ul></li>"
+        elif element.tag == "file":
+            is_reviewed = str(element.get("is_reviewed")).lower()
+            result += f'<li role=\"treeitem\" aria-level=\"{level}\" aria-setsize=\"5\" aria-posinset=\"{index}\" aria-selected=\"false\" class=\"doc\" type=\"file\" is_reviewed=\"{is_reviewed}\">{element.text}</li>'
+        elif element.tag == "root":
+            for index, child in enumerate(element):
+                result += render_tree(child, 0, index)
+        elif element.tag == "category":
+            for index, child in enumerate(element):
+                result += render_tree(child, 1, index)
+    
+    except:
+        result = ""
 
     return result
 
