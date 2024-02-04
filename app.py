@@ -18,6 +18,16 @@ app.secret_key = os.urandom(12)  # Generic key for dev purposes only
 folder_contents_root = None
 
 def create_xml(output_file):
+    """
+    Create an XML file that represents the contents of the folder.
+
+    Args:
+        output_file (str): The path and filename of the XML file to create.
+
+    Returns:
+        None
+
+    """
     root = ET.Element("root")
     category_element = ET.SubElement(root, "category", name="My Documents")
     
@@ -27,6 +37,16 @@ def create_xml(output_file):
     tree.write(output_file, encoding="UTF-8", xml_declaration=True)
 
 def read_xml(input_file):
+    """
+    Read an XML file that represents the contents of the folder.
+
+    Args:
+        input_file (str): The path and filename of the XML file to read.
+
+    Returns:
+        None
+
+    """
     global folder_contents_root
     with open('./config/folder_contents.xml', 'r') as file:
         xml_data = file.read()
@@ -34,10 +54,31 @@ def read_xml(input_file):
         folder_contents_root = ET.fromstring(xml_data)
 
 def save_xml(output_file):
+    """
+    Save the XML representation of the folder contents to a file.
+
+    Args:
+        output_file (str): The path and filename of the XML file to save to.
+
+    Returns:
+        None
+
+    """
     with open("./config/folder_contents.xml", 'w') as file:
         file.write(ET.tostring(folder_contents_root, encoding='unicode'))
 
 def scan_path(root, folder_path):
+    """
+    This function scans a given folder path and creates XML elements for each folder and file found.
+
+    Args:
+        root (xml.etree.ElementTree): The root XML element to add the folders and files to.
+        folder_path (str): The path of the folder to scan.
+
+    Returns:
+        None
+
+    """
     folders = [ f.name for f in os.scandir(folder_path) if f.is_dir() ]
     files = [ f.name for f in os.scandir(folder_path) if f.is_file() ]
     for folder_name in folders:
@@ -49,10 +90,18 @@ def scan_path(root, folder_path):
         file_element.set("is_reviewed", "false")
         file_element.text = file_name
 
-# ======== Routing =========================================================== #
-# -------- Login ------------------------------------------------------------- #
 @app.route('/', methods=['GET', 'POST'])
 def login():
+    """
+    Login page.
+
+    Args:
+        request.form (dict): The form data submitted by the user.
+
+    Returns:
+        str: A JSON response indicating whether the login was successful or not.
+
+    """
     global folder_contents_root
     if not session.get('logged_in'):
         form = forms.LoginForm(request.form)
@@ -72,12 +121,28 @@ def login():
 
 @app.route("/logout")
 def logout():
+    """
+    Logout user.
+
+    Returns:
+        redirect: Redirects to the login page.
+
+    """
     session['logged_in'] = False
     return redirect(url_for('login'))
 
-# -------- Signup ---------------------------------------------------------- #
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
+    """
+    Signup page.
+
+    Args:
+        request.form (dict): The form data submitted by the user.
+
+    Returns:
+        str: A JSON response indicating whether the signup was successful or not.
+
+    """
     if not session.get('logged_in'):
         form = forms.LoginForm(request.form)
         if request.method == 'POST':
@@ -95,9 +160,18 @@ def signup():
         return render_template('login.html', form=form)
     return redirect(url_for('login'))
 
-# -------- Settings ---------------------------------------------------------- #
 @app.route('/settings', methods=['GET', 'POST'])
 def settings():
+    """
+    Settings page.
+
+    Args:
+        request.form (dict): The form data submitted by the user.
+
+    Returns:
+        str: A JSON response indicating whether the settings were saved or not.
+
+    """
     if session.get('logged_in'):
         if request.method == 'POST':
             password = request.form['password']
@@ -112,6 +186,13 @@ def settings():
 
 @app.route('/comments', methods=['GET', 'POST'])
 def comments():
+    """
+    Comments page.
+
+    Returns:
+        str: A JSON response indicating whether the comments were retrieved or not.
+
+    """
     if session.get('logged_in'):
         comments = helpers.get_comments()
         user = helpers.get_user()
@@ -119,6 +200,18 @@ def comments():
     return redirect(url_for('login'))
 
 def render_tree(element, level, index):
+    """
+    Render the folder tree.
+
+    Args:
+        element (xml.etree.ElementTree): The XML element to render.
+        level (int): The current level of the element in the tree.
+        index (int): The index of the element in the tree.
+
+    Returns:
+        str: The HTML for the rendered tree.
+
+    """
     result = ''
     if element.tag == "folder":
         is_reviewed = str(element.get("is_reviewed")).lower()
@@ -142,6 +235,17 @@ def render_tree(element, level, index):
 
 @app.route('/mark_as_reviewed', methods=['GET', 'POST'])
 def mark_as_reviewed():
+    """
+    This function marks a file as reviewed or unreviewed.
+
+    Args:
+        file_path (str): The path of the file to mark as reviewed or unreviewed.
+        is_reviewed (bool): A boolean value indicating whether the file should be marked as reviewed or unreviewed.
+
+    Returns:
+        str: A JSON response indicating whether the file was marked as reviewed or unreviewed successfully or not.
+
+    """
     global folder_contents_root
     if session.get('logged_in'):
         file_path = request.json["activeFile"]
@@ -162,6 +266,19 @@ def mark_as_reviewed():
 
 @app.route('/submit_comment', methods=['GET', 'POST'])
 def submit_comment():
+    """
+    This function is used to submit a comment.
+
+    Args:
+        selectedText (str): The selected text.
+        activeFile (str): The active file.
+        comment (str): The comment.
+        user (str): The user.
+        tag (str): The tag.
+
+    Returns:
+        str: A JSON response indicating whether the comment was saved or not.
+    """
     form = forms.CommentForm(request.form)
     if session.get('logged_in'):
         user = helpers.get_user().username
@@ -182,6 +299,13 @@ def submit_comment():
 
 @app.route('/download_csv', methods=['GET', 'POST'])
 def download_csv():
+    """
+    This function generates a CSV file containing all the comments in the database.
+
+    Returns:
+        Response: A CSV file containing all the comments in the database.
+
+    """
     comments = helpers.get_comments()
 
     csv_data = StringIO()
@@ -198,7 +322,16 @@ def download_csv():
 
 @app.route('/delete_comment/<int:comment_id>', methods=['DELETE'])
 def delete_comment_route(comment_id):
-    # Implement your delete_comment function to delete the comment from the database
+    """
+    Delete a comment based on its ID.
+
+    Parameters:
+    comment_id (int): The ID of the comment to delete.
+
+    Returns:
+    JSON: A JSON object with a "success" key indicating whether the comment was deleted or not.
+
+    """
     result = helpers.delete_comment(comment_id)
 
     if result:
@@ -208,11 +341,20 @@ def delete_comment_route(comment_id):
 
 @app.route('/upload_zip_file', methods=['GET', 'POST'])
 def upload_zip_file():
+    """
+    This function is used to upload a zip file and extract its contents.
+
+    Args:
+        data_from_js (dict): The data sent from the JavaScript client.
+
+    Returns:
+        dict: A dictionary containing a success key indicating whether the operation was successful or not.
+    """
     response = {
         "success": ""
     }
     try:
-        data_from_js = request.json  # Assuming data is sent as JSON
+        data_from_js = request.json
         output_folder="./uploads"
         # Decode the base64 string
         zip_data = base64.b64decode(data_from_js["content"])
@@ -246,6 +388,15 @@ def upload_zip_file():
 
 @app.route('/process_data', methods=['GET', 'POST'])
 def process_data():
+    """
+    This function is used to process the data sent from the JavaScript client.
+
+    Args:
+        data_from_js (dict): The data sent from the JavaScript client.
+
+    Returns:
+        dict: A dictionary containing the processed data.
+    """
     response = {
         "change" : False,
         "content": "",
@@ -268,6 +419,16 @@ def process_data():
     return jsonify(response)
 
 def check_if_file_is_reviewed(file_path):
+    """
+    This function checks if a file is reviewed or not.
+
+    Args:
+        file_path (str): The path of the file to check.
+
+    Returns:
+        str: A string indicating whether the file is reviewed or not.
+
+    """
     global folder_contents_root
     is_reviewed = "false"
     folders = file_path.split('/')[0:-1]
@@ -281,9 +442,9 @@ def check_if_file_is_reviewed(file_path):
         is_reviewed = file_element.get("is_reviewed")
     return is_reviewed
 
+# Read the folder content at initial stage
 with app.app_context():
     read_xml("./config/folder_contents.xml")
 
-# ======== Main ============================================================== #
 if __name__ == "__main__":
     app.run(debug=True, use_reloader=True, host="0.0.0.0")
