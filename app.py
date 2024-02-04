@@ -33,14 +33,20 @@ def read_xml(input_file):
         file.close()
         folder_contents_root = ET.fromstring(xml_data)
 
+def save_xml(output_file):
+    with open("./config/folder_contents.xml", 'w') as file:
+        file.write(ET.tostring(folder_contents_root, encoding='unicode'))
+
 def scan_path(root, folder_path):
     folders = [ f.name for f in os.scandir(folder_path) if f.is_dir() ]
     files = [ f.name for f in os.scandir(folder_path) if f.is_file() ]
     for folder_name in folders:
         folder_element = ET.SubElement(root, "folder", name=folder_name)
+        folder_element.set("is_reviewed", "false")
         scan_path(folder_element, folder_path + "/" + folder_name)
     for file_name in files:
         file_element = ET.SubElement(root, "file")
+        file_element.set("is_reviewed", "false")
         file_element.text = file_name
 
 # ======== Routing =========================================================== #
@@ -64,12 +70,10 @@ def login():
     user = helpers.get_user()
     return render_template('home.html', user=user, root=folder_contents_root, level = 1, index = 0, render_tree=render_tree)
 
-
 @app.route("/logout")
 def logout():
     session['logged_in'] = False
     return redirect(url_for('login'))
-
 
 # -------- Signup ---------------------------------------------------------- #
 @app.route('/signup', methods=['GET', 'POST'])
@@ -91,7 +95,6 @@ def signup():
         return render_template('login.html', form=form)
     return redirect(url_for('login'))
 
-
 # -------- Settings ---------------------------------------------------------- #
 @app.route('/settings', methods=['GET', 'POST'])
 def settings():
@@ -107,7 +110,6 @@ def settings():
         return render_template('settings.html', user=user)
     return redirect(url_for('login'))
 
-
 @app.route('/comments', methods=['GET', 'POST'])
 def comments():
     if session.get('logged_in'):
@@ -116,18 +118,19 @@ def comments():
         return render_template('comments.html', user=user, comments=comments)
     return redirect(url_for('login'))
 
-
 def render_tree(element, level, index):
     result = ''
     if element.tag == "folder":
-        result += f"<li role=\"treeitem\" aria-level=\"{level}\" aria-setsize=\"3\" aria-posinset=\"{index}\" aria-expanded=\"false\" aria-selected=\"false\" type=\"folder\">"
+        is_reviewed = str(element.get("is_reviewed")).lower()
+        result += f"<li role=\"treeitem\" aria-level=\"{level}\" aria-setsize=\"3\" aria-posinset=\"{index}\" aria-expanded=\"false\" aria-selected=\"false\" type=\"folder\" is_reviewed=\"{is_reviewed}\">"
         result += f'<span>{element.get("name")}</span>'
         result += "<ul role=\"group\">"
         for index, child in enumerate(element):
             result += render_tree(child, level+1, index)
         result += "</ul></li>"
     elif element.tag == "file":
-        result += f'<li role=\"treeitem\" aria-level=\"{level}\" aria-setsize=\"5\" aria-posinset=\"{index}\" aria-selected=\"false\" class=\"doc\" type=\"file\">{element.text}</li>'
+        is_reviewed = str(element.get("is_reviewed")).lower()
+        result += f'<li role=\"treeitem\" aria-level=\"{level}\" aria-setsize=\"5\" aria-posinset=\"{index}\" aria-selected=\"false\" class=\"doc\" type=\"file\" is_reviewed=\"{is_reviewed}\">{element.text}</li>'
     elif element.tag == "root":
         for index, child in enumerate(element):
             result += render_tree(child, 0, index)
@@ -139,11 +142,23 @@ def render_tree(element, level, index):
 
 @app.route('/mark_as_reviewed', methods=['GET', 'POST'])
 def mark_as_reviewed():
+    global folder_contents_root
     if session.get('logged_in'):
-        print(request.json)
-        return jsonify({'success': True}), 200
-    else:
-        return jsonify({'success': False, 'error': 'Login Required'}), 404
+        file_path = request.json["activeFile"]
+        is_reviewed = request.json["is_reviewed"]
+        folders = file_path.split('/')[0:-1]
+        file_name = file_path.split('/')[-1]
+        folder_element = folder_contents_root
+        for folder in folders:
+            if folder_element is not None:
+                folder_element = folder_element.find(f".//folder[@name='{folder}']")
+        if folder_element is not None:
+            file_element = folder_element.find(f".//file[.='{file_name}']")
+            if file_element is not None:
+                file_element.set("is_reviewed", str(is_reviewed).lower())
+                save_xml("./config/folder_contents.xml")
+            return jsonify({'success': True}), 200
+    return jsonify({'success': False, 'error': 'Login Required'}), 404
 
 @app.route('/submit_comment', methods=['GET', 'POST'])
 def submit_comment():
@@ -164,7 +179,6 @@ def submit_comment():
     else:
         return json.dumps({'status': 'Comment not saved'})
     return json.dumps({'status': 'Comment saved'})
-
 
 @app.route('/download_csv', methods=['GET', 'POST'])
 def download_csv():
@@ -229,14 +243,14 @@ def upload_zip_file():
     except Exception as e:
         response["success"] = False
     return jsonify(response)
-    
 
 @app.route('/process_data', methods=['GET', 'POST'])
 def process_data():
     response = {
         "change" : False,
         "content": "",
-        "suffix": ""
+        "suffix": "",
+        "is_reviewed": False
     }
     data_from_js = request.json  # Assuming data is sent as JSON
     if data_from_js['type'] == 'file':
@@ -250,10 +264,24 @@ def process_data():
             response["suffix"] = pathlib.Path(file_path).suffix
             response["change"] = True
             response["content"] = text
+            response["is_reviewed"] = str(check_if_file_is_reviewed(file_path)).lower()
     return jsonify(response)
 
+def check_if_file_is_reviewed(file_path):
+    global folder_contents_root
+    is_reviewed = "false"
+    folders = file_path.split('/')[0:-1]
+    file_name = file_path.split('/')[-1]
+    folder_element = folder_contents_root
+    for folder in folders:
+        if (folder != '.') and (folder != 'uploads'):
+            folder_element = folder_element.find(f".//folder[@name='{folder}']")
+    file_element = folder_element.find(f".//file[.='{file_name}']")
+    if file_element is not None:
+        is_reviewed = file_element.get("is_reviewed")
+    return is_reviewed
+
 with app.app_context():
-    create_xml('./config/folder_contents.xml')
     read_xml("./config/folder_contents.xml")
 
 # ======== Main ============================================================== #

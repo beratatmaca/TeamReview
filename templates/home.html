@@ -140,24 +140,21 @@ int main(int argc, char **argv)
 
   var markAsReviewedCheckbox = document.getElementById('mark-as-reviewed');
   markAsReviewedCheckbox.addEventListener('click', function () {
-    var is_reviewed = false;
-    if(imageModalCloseBtn.classList.contains('is-active')) {
-      is_reviewed = true;
-    } else {
-      is_reviewed = false;
-    }
-    var xhr = new XMLHttpRequest();
-
-    xhr.onreadystatechange = function () {
-      if (xhr.readyState == XMLHttpRequest.DONE) {
-        location.reload();
-      }
-    }
-    
+    var is_reviewed = markAsReviewedCheckbox.checked;
+    var xhr = new XMLHttpRequest();    
     xhr.open("POST", "/mark_as_reviewed", true);
     xhr.setRequestHeader("Content-Type", "application/json");
     var data = JSON.stringify({"activeFile": activeFile, "is_reviewed": is_reviewed});
     xhr.send(data);
+
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState == XMLHttpRequest.DONE) {
+        const selectedFileInput = document.querySelector('[aria-selected="true"][type="file"]');
+        if (selectedFileInput) {
+          selectedFileInput.setAttribute('is_reviewed', is_reviewed);
+        }
+      }
+    }
   });
 </script>
 {% endblock %}

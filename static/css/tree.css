@@ -77,6 +77,14 @@ ul[role="tree"] li {
   color: darkorange;
 }
 
+[role="treeitem"][aria-selected="true"][type="folder"] {
+  font-style: italic;
+}
+
+[role="treeitem"][is_reviewed="true"] {
+  color: green;
+}
+
 [role="treeitem"].focus,
 [role="treeitem"] span.focus {
   border-color: black;

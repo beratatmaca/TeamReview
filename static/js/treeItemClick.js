@@ -83,13 +83,19 @@ window.addEventListener('load', function () {
           var changeStatus = parsedResponse["change"];
           var contentResponse = parsedResponse["content"];
           var fileSuffix = parsedResponse["suffix"];
+          var is_reviewed = parsedResponse["is_reviewed"];
           if (changeStatus) {
             const codeOutput = document.getElementById('current-content-unique');
             const codeElement = document.getElementById('code-content-unique');
-            console.log(updateClassBasedOnExtension(fileSuffix));
             codeElement.className = updateClassBasedOnExtension(fileSuffix);
             
             codeOutput.querySelector('code').textContent = contentResponse;
+            if(is_reviewed === "False" || is_reviewed === "false") {
+              document.getElementById('mark-as-reviewed').checked = false;
+            } else {
+              document.getElementById('mark-as-reviewed').checked = true;
+            }
+            
             Prism.highlightAll();
           }
         }
