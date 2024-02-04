@@ -66,7 +66,7 @@ def login():
                     return json.dumps({'status': 'Login successful'})
                 return json.dumps({'status': 'Invalid user/pass'})
             return json.dumps({'status': 'Both fields required'})
-        return render_template('login.html', form=form)
+        return render_template('login.html', form=form, debug=app.debug)
     user = helpers.get_user()
     return render_template('home.html', user=user, root=folder_contents_root, level = 1, index = 0, render_tree=render_tree)
 

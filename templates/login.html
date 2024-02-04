@@ -54,12 +54,12 @@
         <div class="column is-auto">
           <br>
           <p class="title is-2">TeamReview</p>
-          <p class="subtitle is-4"><i>Simple example for rapid prototyping</i></p>
-          <p class="subtitle is-5">&#x2022 Encrypted user authorizaton</p>
+          <p class="subtitle is-4"><i>Simple example for project reviewing</i></p>
           <p class="subtitle is-5">&#x2022 Ready to go database system</p>
           <p class="subtitle is-5">&#x2022 User login, signup, and settings</p>           
         </div>
         <div class="column is-auto">
+          {% if debug %}
           <div id="signup-box" class="signup-box">
             <div class="signup-area">
               <h1 class="title">Sign Up</h1>
@@ -103,6 +103,7 @@
               <i><a id="feedback" class="feedback"></a></i>
             </div>
           </div>
+          {% endif %}
         </div>
       </div>
     </div>  
